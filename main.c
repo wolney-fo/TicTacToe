@@ -8,9 +8,15 @@
 void initializeBoard(char board[BOARD_SIZE][BOARD_SIZE]);
 void printBoard(const char board[BOARD_SIZE][BOARD_SIZE]);
 void makeMove(char board[BOARD_SIZE][BOARD_SIZE], int move, char currentPlayer);
-int isWin(const char board[BOARD_SIZE][BOARD_SIZE]);
+int isWin(const char board[BOARD_SIZE][BOARD_SIZE], const char aiPlayer);
 int isDraw(const char board[BOARD_SIZE][BOARD_SIZE]);
 int isValidMove(const char board[BOARD_SIZE][BOARD_SIZE], int move);
+int isGameOver(const char board[BOARD_SIZE][BOARD_SIZE], char player);
+
+// Minimax
+int getPoints(const char board[BOARD_SIZE][BOARD_SIZE], char aiPlayer);
+int getAiBestMove(char board[BOARD_SIZE][BOARD_SIZE], char currentPlayer);
+int minimax(char board[BOARD_SIZE][BOARD_SIZE]);
 
 int main()
 {
@@ -18,6 +24,7 @@ int main()
     initializeBoard(board);
 
     char currentPlayer = 'X';
+    char aiPlayer = (currentPlayer == 'X') ? 'O' : 'X';
     int move;
 
     // Main menu
@@ -32,14 +39,21 @@ int main()
         system("cls");
         printBoard(board);
 
-        do {
-            printf("\n[%c] > ", currentPlayer);
-            scanf_s("%d", &move);
-        } while (!isValidMove(board, move));
+        if (currentPlayer == aiPlayer) {
+            // AI's turn
+            printf("\nSelina is thinking...\n");
+            move = getAiBestMove(board, aiPlayer);
+        } else {
+            // Human's turn
+            do {
+                printf("\n[%c] > ", currentPlayer);
+                scanf_s("%d", &move);
+            } while (!isValidMove(board, move));
+        }
 
         makeMove(board, move, currentPlayer);
 
-        if (isWin(board) == 1) {
+        if (isWin(board, currentPlayer) == 1) {
             system("cls");
             printf("Player %c wins!\n\n", currentPlayer);
             printBoard(board);
@@ -57,10 +71,10 @@ int main()
     return 0;
 }
 
-int isWin(const char board[BOARD_SIZE][BOARD_SIZE]) {
+int isWin(const char board[BOARD_SIZE][BOARD_SIZE], const char currentPlayer) {
     // Horizontal
     for (int i = 0; i < BOARD_SIZE; i++) {
-        if ( (board[i][0] == board[i][1] && board[i][1] == board[i][2]) && (board[i][0] == 'X' || board[i][0] == 'O') ) {
+        if ( (board[i][0] == board[i][1] && board[i][1] == board[i][2]) && (board[i][0] == currentPlayer) ) {
             return 1;
         }
 
@@ -68,17 +82,17 @@ int isWin(const char board[BOARD_SIZE][BOARD_SIZE]) {
 
     // Vertical
     for (int j = 0; j < BOARD_SIZE; j++) {
-        if ( (board[0][j] == board[1][j] && board[1][j] == board[2][j]) && (board[0][j] == 'X' || board[0][j] == 'O') ) {
+        if ( (board[0][j] == board[1][j] && board[1][j] == board[2][j]) && (board[0][j] == currentPlayer) ) {
             return 1;
         }
     }
 
     // Diagonal
-    if ( (board[0][0] == board[1][1] && board[0][0] == board[2][2]) && (board[0][0] == 'X' || board[0][0] == 'O') ) {
+    if ( (board[0][0] == board[1][1] && board[0][0] == board[2][2]) && (board[0][0] == currentPlayer) ) {
         return 1;
     }
 
-    if ( (board[2][0] == board[1][1] && board[1][1] == board[0][2]) && (board[2][0] == 'X' || board[2][0] == 'O') ) {
+    if ( (board[2][0] == board[1][1] && board[1][1] == board[0][2]) && (board[2][0] == currentPlayer) ) {
         return 1;
     }
 
@@ -126,4 +140,43 @@ void makeMove(char board[BOARD_SIZE][BOARD_SIZE], int move, char currentPlayer) 
         int col = (move - 1) % 3;
         board[row][col] = currentPlayer;
     }
+}
+
+int isGameOver(const char board[BOARD_SIZE][BOARD_SIZE], char player) {
+    return ( (isWin(board, player)) || (isDraw(board)) || (isWin(board, (player == 'X') ? 'O' : 'X')) );
+}
+
+// Minimax
+int getPoints(const char board[BOARD_SIZE][BOARD_SIZE], char aiPlayer) {
+    if (isWin(board, aiPlayer)) {
+        return 1; // AI player wins
+    } else if (isWin(board, (aiPlayer == 'X') ? 'O' : 'X')) {
+        return -1; // Opponent wins
+    } else if (isDraw(board)) {
+        return 0; // It's a draw
+    } else {
+        return 0; // The game is still ongoing (no immediate result)
+    }
+}
+
+int getAiBestMove(char board[BOARD_SIZE][BOARD_SIZE], char currentPlayer) {
+    int bestMove = -1;
+    int bestScore = -2;
+
+    for (int move = 1; move <= 9; move++) {
+        if (isValidMove(board, move)) {
+            makeMove(board, move, currentPlayer);
+            int score = minimax(board);
+            makeMove(board, move, '_'); // Undo move
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+            }
+        }
+    }
+    return bestMove;
+}
+
+int minimax(char board[BOARD_SIZE][BOARD_SIZE]) {
+    return 1;
 }
