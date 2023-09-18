@@ -15,8 +15,8 @@ int isGameOver(const char board[BOARD_SIZE][BOARD_SIZE], char player);
 
 // Minimax
 int getPoints(const char board[BOARD_SIZE][BOARD_SIZE], char aiPlayer);
-int getAiBestMove(char board[BOARD_SIZE][BOARD_SIZE], char currentPlayer);
-int minimax(char board[BOARD_SIZE][BOARD_SIZE]);
+int getAiBestMove(char board[BOARD_SIZE][BOARD_SIZE], char aiPlayer);
+int minimax(char board[BOARD_SIZE][BOARD_SIZE], int depth, int isMaximizing, const char aiPlayer);
 
 int main()
 {
@@ -24,15 +24,16 @@ int main()
     initializeBoard(board);
 
     char currentPlayer = 'X';
-    char aiPlayer = (currentPlayer == 'X') ? 'O' : 'X';
+    const char player = 'X';
+    const char aiPlayer = (player == 'X') ? 'O' : 'X';
     int move;
 
     // Main menu
     system("cls");
-    printf("XOXOXOXOXOXOXOXOXOXOX\n|||| Tic-Tac-Toe ||||\nXOXOXOXOXOXOXOXOXOXOX\n\n");
-    printf("How to play: choose any empty spot on the board by its number (1-9).\n");
-    printf("Game map:\n 1 | 2 | 3\n-----------\n 4 | 5 | 6\n-----------\n 7 | 8 | 9\n");
-    printf("You ready? Press any key to start!!\n");
+    printf("XOXOXOXOXOXOXOXOXOXOX\n|||| Tic-Tac-Toe ||||\nXOXOXOXOXOXOXOXOXOXOX\nPlay against Selina (COM)\n\n");
+    printf("How to play: choose any empty spot on the board by its number (1-9).\n\n");
+    printf("Game map:\n 1 | 2 | 3\n-----------\n 4 | 5 | 6\n-----------\n 7 | 8 | 9\n\n\n");
+    printf("Ready to play? Press any key to start!!\n");
     getch();
 
     for (int currentMove = 0; currentMove < MAX_MOVES; currentMove++) {
@@ -44,7 +45,7 @@ int main()
             printf("\nSelina is thinking...\n");
             move = getAiBestMove(board, aiPlayer);
         } else {
-            // Human's turn
+            // Player's turn
             do {
                 printf("\n[%c] > ", currentPlayer);
                 scanf_s("%d", &move);
@@ -149,25 +150,25 @@ int isGameOver(const char board[BOARD_SIZE][BOARD_SIZE], char player) {
 // Minimax
 int getPoints(const char board[BOARD_SIZE][BOARD_SIZE], char aiPlayer) {
     if (isWin(board, aiPlayer)) {
-        return 1; // AI player wins
-    } else if (isWin(board, (aiPlayer == 'X') ? 'O' : 'X')) {
-        return -1; // Opponent wins
-    } else if (isDraw(board)) {
-        return 0; // It's a draw
-    } else {
-        return 0; // The game is still ongoing (no immediate result)
+        return 1; // AI wins
     }
+
+    if (isDraw(board)) {
+        return 0; // It's a draw
+    }
+
+    return -1; // AI loses
 }
 
-int getAiBestMove(char board[BOARD_SIZE][BOARD_SIZE], char currentPlayer) {
+int getAiBestMove(char board[BOARD_SIZE][BOARD_SIZE], char aiPlayer) {
     int bestMove = -1;
     int bestScore = -2;
 
     for (int move = 1; move <= 9; move++) {
         if (isValidMove(board, move)) {
-            makeMove(board, move, currentPlayer);
-            int score = minimax(board);
-            makeMove(board, move, '_'); // Undo move
+            makeMove(board, move, aiPlayer);
+            int score = minimax(board, 0, 0, aiPlayer);
+            makeMove(board, move, '_');
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = move;
@@ -177,6 +178,39 @@ int getAiBestMove(char board[BOARD_SIZE][BOARD_SIZE], char currentPlayer) {
     return bestMove;
 }
 
-int minimax(char board[BOARD_SIZE][BOARD_SIZE]) {
-    return 1;
+int minimax(char board[BOARD_SIZE][BOARD_SIZE], int depth, int isMaximizing, const char aiPlayer) {
+    if (isGameOver(board, aiPlayer)) {
+        return getPoints(board, aiPlayer);
+    }
+
+    int score;
+
+    if (isMaximizing) {
+        int bestScore = -2;
+        for (int move = 1; move <= 9; move++) {
+            if (isValidMove(board, move)) {
+                makeMove(board, move, aiPlayer);
+                score = minimax(board, depth + 1, 0, aiPlayer);
+                makeMove(board, move, '_');
+                if (score > bestScore) {
+                    bestScore = score;
+                }
+            }
+        }
+        return bestScore;
+    }
+    else {
+        int bestScore = 2;
+        for (int move = 1; move <= 9; move++) {
+            if (isValidMove(board, move)) {
+                makeMove(board, move, (aiPlayer == 'X') ? 'O' : 'X');
+                score = minimax(board, depth + 1, 1, aiPlayer);
+                makeMove(board, move, '_');
+                if (score < bestScore) {
+                    bestScore = score;
+                }
+            }
+        }
+        return bestScore;
+    }
 }
